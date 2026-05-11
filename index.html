@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全球食品產業鏈極限週報</title>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2236;
+    --border: #1e2d4a;
+    --blue: #00F3FF;
+    --green: #CCFF00;
+    --red: #FF3131;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --card: #131c2e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  /* HEADER */
+  .header { background: linear-gradient(135deg, #0a0e1a 0%, #0d1829 50%, #091420 100%); border-bottom: 1px solid var(--blue); padding: 24px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .header-title { font-size: 1.5rem; font-weight: 700; letter-spacing: 0.05em; }
+  .header-title span { color: var(--blue); text-shadow: 0 0 20px rgba(0,243,255,0.5); }
+  .header-meta { text-align: right; font-size: 0.8rem; color: var(--muted); }
+  .header-meta strong { color: var(--green); }
+  .pulse { display: inline-block; width: 8px; height: 8px; background: var(--green); border-radius: 50%; margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(204,255,0,0.4)} 50%{opacity:0.8;box-shadow:0 0 0 6px rgba(204,255,0,0)} }
+
+  /* STATS BAR */
+  .statsbar { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 12px 32px; display: flex; gap: 32px; flex-wrap: wrap; }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat-n { font-size: 1.4rem; font-weight: 700; color: var(--blue); }
+  .stat-l { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); background: var(--bg2); padding: 0 32px; flex-wrap: wrap; }
+  .tab { padding: 14px 20px; cursor: pointer; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.2s; color: var(--muted); white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+  .tab.active.green { color: var(--green); border-bottom-color: var(--green); }
+  .tab.active.red { color: var(--red); border-bottom-color: var(--red); }
+
+  /* FILTER BAR */
+  .filterbar { padding: 16px 32px; background: var(--bg); border-bottom: 1px solid var(--border); display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .filter-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; font-size: 0.75rem; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { background: var(--bg3); color: var(--text); border-color: var(--blue); }
+  .search-box { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 0.8rem; width: 220px; }
+  .search-box:focus { outline: none; border-color: var(--blue); }
+  .filter-label { font-size: 0.75rem; color: var(--muted); margin-right: 4px; }
+
+  /* CONTENT */
+  .content { padding: 24px 32px; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .section-header { margin-bottom: 20px; }
+  .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 4px; }
+  .section-desc { font-size: 0.8rem; color: var(--muted); }
+
+  /* CARDS GRID */
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 16px; }
+
+  /* CARD */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; transition: all 0.2s; cursor: default; position: relative; overflow: hidden; }
+  .card:hover { border-color: #2a3d5e; transform: translateY(-1px); box-shadow: 0 4px 24px rgba(0,0,0,0.3); }
+  .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+  .card.type-tech::before { background: var(--blue); }
+  .card.type-new::before { background: var(--green); }
+  .card.type-risk::before { background: var(--red); }
+  .card.type-finance::before { background: #f59e0b; }
+
+  .card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+  .card-date { font-size: 0.7rem; color: var(--blue); font-weight: 600; white-space: nowrap; background: rgba(0,243,255,0.08); padding: 2px 8px; border-radius: 10px; }
+  .card-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .tag { font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  .tag-tech { background: rgba(0,243,255,0.12); color: var(--blue); }
+  .tag-new { background: rgba(204,255,0,0.12); color: var(--green); }
+  .tag-risk { background: rgba(255,49,49,0.12); color: var(--red); }
+  .tag-finance { background: rgba(245,158,11,0.12); color: #f59e0b; }
+
+  .card-company { font-size: 0.72rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .card-title { font-size: 0.9rem; font-weight: 700; line-height: 1.4; margin-bottom: 12px; color: var(--text); }
+  .card-title a { color: inherit; text-decoration: none; }
+  .card-title a:hover { color: var(--blue); }
+
+  .card-summary { font-size: 0.78rem; color: #9aa5b4; line-height: 1.6; margin-bottom: 12px; border-left: 2px solid var(--border); padding-left: 10px; }
+
+  .card-insight { background: rgba(204,255,0,0.05); border: 1px solid rgba(204,255,0,0.15); border-radius: 6px; padding: 10px 12px; font-size: 0.77rem; color: #d4f56a; line-height: 1.5; }
+  .card-insight::before { content: '💡 研發業務應用：'; font-weight: 700; color: var(--green); display: block; margin-bottom: 4px; font-size: 0.72rem; }
+
+  .card-source { margin-top: 10px; font-size: 0.7rem; color: var(--muted); }
+  .card-source a { color: #4a7fa5; text-decoration: none; }
+  .card-source a:hover { color: var(--blue); text-decoration: underline; }
+
+  /* HIDDEN */
+  .card.hidden { display: none; }
+
+  /* OVERVIEW */
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .ov-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 20px; }
+  .ov-card-title { font-size: 0.85rem; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .ov-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .ov-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.78rem; }
+  .ov-item:last-child { border-bottom: none; }
+  .ov-item-icon { font-size: 0.9rem; }
+  .ov-item-text { color: var(--muted); }
+  .ov-item-text strong { color: var(--text); }
+
+  .alert-banner { background: rgba(255,49,49,0.08); border: 1px solid rgba(255,49,49,0.25); border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; display: flex; gap: 12px; align-items: flex-start; }
+  .alert-icon { font-size: 1.2rem; }
+  .alert-content { flex: 1; }
+  .alert-title { font-size: 0.85rem; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+  .alert-text { font-size: 0.78rem; color: #b0b8c4; line-height: 1.5; }
+
+  /* RESPONSIVE */
+  @media(max-width:600px) {
+    .header { padding: 16px; }
+    .content { padding: 16px; }
+    .cards { grid-template-columns: 1fr; }
+    .tabs { padding: 0 12px; }
+    .statsbar { padding: 12px 16px; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">⚡ <span>全球食品產業鏈</span> 極限週報</div>
+    <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">Global Food Supply Chain Intelligence — Research-Driven Sales Edition</div>
+  </div>
+  <div class="header-meta">
+    <div><span class="pulse"></span><strong>2026-05-09</strong> 自動更新</div>
+    <div style="margin-top:4px;">監測週期：2026-05-02 ~ 2026-05-09</div>
+    <div style="margin-top:2px;">涵蓋企業：45家 ｜ 情報條目：45則</div>
+  </div>
+</div>
+
+<div class="statsbar">
+  <div class="stat"><div class="stat-n" style="color:var(--red)">3</div><div class="stat-l">供應鏈風險</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--green)">8</div><div class="stat-l">新品/技術突破</div></div>
+  <div class="stat"><div class="stat-n" style="color:#f59e0b">5</div><div class="stat-l">M&A 動態</div></div>
+  <div class="stat"><div class="stat-n" style="color:var(--blue)">12</div><div class="stat-l">財報/營收</div></div>
+  <div class="stat"><div class="stat-n">45</div><div class="stat-l">總情報條目</div></div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('overview',this)">📊 總覽儀表板</div>
+  <div class="tab" onclick="switchTab('s1',this)">🔬 原料與技術底層</div>
+  <div class="tab green" onclick="switchTab('s2',this)">💰 資本與品牌動向</div>
+  <div class="tab red" onclick="switchTab('s3',this)">🏪 終端通路與肉類行情</div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filterbar" id="filterbar" style="display:none">
+  <span class="filter-label">篩選：</span>
+  <button class="filter-btn active" onclick="filterCards('all',this)">全部</button>
+  <button class="filter-btn" onclick="filterCards('risk',this)">🔴 供應風險</button>
+  <button class="filter-btn" onclick="filterCards('new',this)">🟢 新品/機會</button>
+  <button class="filter-btn" onclick="filterCards('finance',this)">🟡 財報/M&A</button>
+  <button class="filter-btn" onclick="filterCards('tech',this)">🔵 技術突破</button>
+  <input class="search-box" type="text" placeholder="🔍 搜尋公司或關鍵字…" oninput="searchCards(this.value)">
+</div>
+
+<div class="content">
+
+<!-- ===== OVERVIEW ===== -->
+<div class="section active" id="tab-overview">
+  <div class="alert-banner">
+    <div class="alert-icon">🚨</div>
+    <div class="alert-content">
+      <div class="alert-title">本週三大高優先警示</div>
+      <div class="alert-text">
+        ① <strong>Nextida 成立（Rousselot + PB Leiner 合併）</strong> — 全球製藥級明膠形成近雙寡頭，高 Bloom 值原料定價權集中，建議立即鎖定長期合約。<br>
+        ② <strong>泰國木薯澱粉 6 週漲幅 +10.5%</strong>（$525→$580/MT）— 木薯花葉病 + 乾旱雙重衝擊，需啟動替代來源評估（越南/印尼）。<br>
+        ③ <strong>Ingredion Argo 廠設備故障</strong> — $40M 損失，美國/加拿大改性澱粉近期供應受壓，建議提前備庫 4–6 週。
+      </div>
+    </div>
+  </div>
+
+  <div class="overview-grid">
+    <div class="ov-card">
+      <div class="ov-card-title"><div class="ov-dot" style="background:var(--blue)"></div>原料端重點動態</div>
+      <div class="ov-item"><div class="ov-item-icon">🧬</div><div class="ov-item-text"><strong>AVEBE PerfectaGEL ISET</strong> — 首款同時適用傳統粉模與無澱粉硬模的軟糖澱粉，乾燥時間從72hr壓縮至數小時</div></div>
+      <div class="ov-item"><div class="ov-item-icon">🔬</div><div class="ov-item-text"><strong>GELITA GelMA 生物墨水</strong> — 與 Black Drop 合研 3D 生物列印用明膠，MEDELLAPRO 超低內毒素規格進入醫療領域</div></div>
+      <div class="ov-item"><div class="ov-item-icon">❄️</div><div class="ov-item-text"><strong>DSM-Firmenich Freezestorm</strong> — 非薄荷醇冷感 + 八角茴香，鎖定「暖遇冷」感官趨勢，TRPM8 受體驅動</div></div>
+      <div class="ov-item"><div class="ov-item-icon">🐟</div><div class="ov-item-text"><strong>Symrise 投資 Bond Pet Foods</strong> — 精密發酵動物蛋白進入寵物食品，顛覆傳統肉類成分供應商</div></div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-title"><div class="ov-dot" style="background:var(--green)"></div>品牌與資本重點動態</div>
+      <div class="ov-item"><div class="ov-item-icon">💸</div><div class="ov-item-text"><strong>IFF Q1 2026：$2.74B 銷售額</strong>，Food Ingredients 部門正式啟動出售流程（估值 ~$3.28B）</div></div>
+      <div class="ov-item"><div class="ov-item-icon">🌾</div><div class="ov-item-text"><strong>Bunge-Viterra 整合推進</strong> — ADM 持續瘦身剝離資產，糧商版圖重組加速</div></div>
+      <div class="ov-item"><div class="ov-item-icon">🍵</div><div class="ov-item-text"><strong>CHAGEE 海外擴張</strong> — 東南亞門店突破 1,000 家，霸王茶姬本土供應鏈向東南亞延伸</div></div>
+      <div class="ov-item"><div class="ov-item-icon">🍜</div><div class="ov-item-text"><strong>NH Foods「Proteinnovation」</strong> — ¥500億投資植物肉，魔芋葡甘露聚糖用量大增</div></div>
+    </div>
+    <div class="ov-card">
+      <div class="ov-card-title"><div class="ov-dot" style="background:var(--red)"></div>通路與物流重點動態</div>
+      <div class="ov-item"><div class="ov-item-icon">🏪</div><div class="ov-item-text"><strong>Costco Kirkland $900億年銷售額</strong> — Q2 單季新增 30 款新品，私標品滲透率達 28%</div></div>
+      <div class="ov-item"><div class="ov-item-icon">🚚</div><div class="ov-item-text"><strong>Uber Eats 漲傭 +5pp</strong>（Lite 15%→20%）— 餐廳毛利率直接壓縮，食材降本需求急迫</div></div>
+      <div class="ov-item"><div class="ov-item-icon">🤝</div><div class="ov-item-text"><strong>Grab 收購 Foodpanda 台灣 $6億</strong> — 東南亞外送平台整合加速，補貼退潮衝擊餐飲鏈</div></div>
+      <div class="ov-item"><div class="ov-item-icon">🌊</div><div class="ov-item-text"><strong>三菱商事持股泰聯提升至 20%</strong> — 東南亞海鮮加工垂直整合，魚膠原蛋白供應鏈卡位</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SECTION 1: RAW MATERIALS ===== -->
+<div class="section" id="tab-s1">
+  <div class="section-header">
+    <div class="section-title">🔬 區塊一：原料與技術底層 <span style="color:var(--blue);font-size:0.8rem">(Scientific Deep-Dive)</span></div>
+    <div class="section-desc">膠體・澱粉・香料・肉類蛋白原料商 ｜ 分子結構・供應鏈韌性・價格走勢</div>
+  </div>
+  <div class="cards" id="cards-s1">
+
+    <div class="card type-risk" data-type="risk" data-text="Nextida Rousselot PB Leiner 明膠 gelatin M&A 併購">
+      <div class="card-top">
+        <div class="card-date">2026-02-15</div>
+        <div class="card-tags"><span class="tag tag-risk">M&A 風險</span><span class="tag tag-finance">$1.5B</span></div>
+      </div>
+      <div class="card-company">Rousselot (Darling Ingredients) × Tessenderlo (PB Leiner)</div>
+      <div class="card-title"><a href="https://www.nutritioninsight.com/news/darling-ingredients-rousselot-tessenderlo-pbleiner-nextida.html" target="_blank">Nextida 成立：全球最大明膠/膠原蛋白企業，年產能 20 萬公噸，橫跨 23 廠</a></div>
+      <div class="card-summary">Darling Ingredients（Rousselot，持股 85%）與 Tessenderlo（PB Leiner，15%）合併膠明膠膠原蛋白業務成立 Nextida，預估營收 $1.5B，整合豬皮、牛皮、魚皮跨廠 Bloom 值排程與製藥/食品級分配。結案預計 2026 下半年，待監管核准。此舉與 GELITA 並列形成全球製藥級明膠近雙寡頭格局。</div>
+      <div class="card-insight">結案前應立即與 Rousselot 鎖定長期高 Bloom 值（220–280g）製藥級合約，合併後定價權集中，採購談判槓桿將顯著縮減。</div>
+      <div class="card-source">來源：<a href="https://www.nutritioninsight.com/news/darling-ingredients-rousselot-tessenderlo-pbleiner-nextida.html" target="_blank">Nutrition Insight</a></div>
+    </div>
+
+    <div class="card type-tech" data-type="tech" data-text="GELITA GelMA 生物列印 bioprinting MEDELLAPRO 低內毒素">
+      <div class="card-top">
+        <div class="card-date">2026-03-15</div>
+        <div class="card-tags"><span class="tag tag-tech">技術突破</span></div>
+      </div>
+      <div class="card-company">GELITA</div>
+      <div class="card-title"><a href="https://www.gelita.com/en/news/gelita-and-black-drop-join-forces-bioink-development" target="_blank">GELITA × Black Drop 共研 GelMA 生物墨水：甲基丙烯酸化明膠進入 3D 生物列印</a></div>
+      <div class="card-summary">GELITA 基於 MEDELLAPRO® Ultra Low Endotoxin Gelatin（&lt;10 EU/g）開發光交聯 GelMA 水凝膠——明膠自由胺基與甲基丙烯酸酐反應，UV 照射後形成共價交聯網絡，模擬細胞外基質（ECM）力學。超低內毒素規格阻斷體外/體內熱原反應。此路徑將食品級明膠技術升級至生醫高毛利賽道。</div>
+      <div class="card-insight">GELITA 資源向高毛利生醫傾斜，意味食品級 Bloom 值明膠的供應分配將收緊——工業買家應確認長約優先序，避免被排在製藥客戶之後。</div>
+      <div class="card-source">來源：<a href="https://www.gelita.com/en/news" target="_blank">GELITA Newsroom</a></div>
+    </div>
+
+    <div class="card type-risk" data-type="risk" data-text="Rousselot StabiCaps 軟膠囊 交聯 shelf life">
+      <div class="card-top">
+        <div class="card-date">2026-02-10</div>
+        <div class="card-tags"><span class="tag tag-tech">專利技術</span><span class="tag tag-new">新品</span></div>
+      </div>
+      <div class="card-company">Rousselot</div>
+      <div class="card-title"><a href="https://www.nutritionaloutlook.com/view/darling-ingredients-rousselot-has-announced-receipt-of-us-patent-for-stabicaps-gelatin-technology" target="_blank">Rousselot StabiCaps 獲美國專利：抑制 Maillard 交聯，軟膠囊保質期穩定達 24 個月</a></div>
+      <div class="card-summary">StabiCaps 修飾明膠 Lys/Hyl 殘基上的活性胺基，降低與填充料醛基/還原糖的 Maillard 反應活性，在 40°C/75%RH 加速老化條件下維持 USP &lt;711&gt; 崩解合規。這是 HPMC 膠囊以外、針對含醛基油脂（omega-3、特定維生素）封裝的技術性解法。</div>
+      <div class="card-insight">配方含 omega-3 或醛類油脂的軟膠囊採購談判中，StabiCaps 專利為替代 HPMC 的技術依據——可要求 Rousselot 進行 3 批次穩定性數據展示，以此換取更有利的供應條款。</div>
+      <div class="card-source">來源：<a href="https://www.nutritionaloutlook.com/view/darling-ingredients-rousselot-has-announced-receipt-of-us-patent-for-stabicaps-gelatin-technology" target="_blank">Nutritional Outlook</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="AVEBE PerfectaGEL ISET 澱粉 軟糖 gummy vegan 乾燥">
+      <div class="card-top">
+        <div class="card-date">2026-02-01</div>
+        <div class="card-tags"><span class="tag tag-new">新品突破</span><span class="tag tag-tech">技術</span></div>
+      </div>
+      <div class="card-company">AVEBE</div>
+      <div class="card-title"><a href="https://www.foodingredientsfirst.com/video/ism-prosweets-2026-live-avebe-showcases-fast-setting-potato-starch-for-scalable-vegan-gummies.html" target="_blank">PerfectaGEL® ISET：乙醯化磷酸化馬鈴薯澱粉，乾燥時間從 72 小時壓縮至數小時</a></div>
+      <div class="card-summary">在 ISM ProSweets 2026（科隆，2/1-4）發表。ISET 透過乙醯化+磷酸化雙重修飾增強分子間氫鍵並控制回生動力學，實現快速凝膠網絡建立。同時適用粉模（starch mould）與無澱粉硬模（starchless rigid mould），無明膠，符合 halal/vegan 認證，大幅降低能耗與製造週期。</div>
+      <div class="card-insight">ISET 在降低明膠依賴的同時可縮減軟糖烤箱時間成本——糖果 R&D 應立即申請技術試樣，計算總製造成本（TCO）對比明膠配方，作為對明膠供應商議價的備援方案。</div>
+      <div class="card-source">來源：<a href="https://www.foodingredientsfirst.com/video/ism-prosweets-2026-live-avebe-showcases-fast-setting-potato-starch-for-scalable-vegan-gummies.html" target="_blank">Food Ingredients First</a></div>
+    </div>
+
+    <div class="card type-risk" data-type="risk" data-text="Ingredion Argo 澱粉 供應鏈 故障 EPS">
+      <div class="card-top">
+        <div class="card-date">2026-05-06</div>
+        <div class="card-tags"><span class="tag tag-risk">供應風險</span><span class="tag tag-finance">財報</span></div>
+      </div>
+      <div class="card-company">Ingredion (INGR)</div>
+      <div class="card-title"><a href="https://www.fool.com/earnings/call-transcripts/2026/05/05/ingredion-ingr-q1-2026-earnings-transcript/" target="_blank">Q1 2026 EPS Miss -6.4%：Argo 廠 $40M 設備故障，美加改性澱粉 volume 季減 7%</a></div>
+      <div class="card-summary">Q1 2026 調整後 EPS $2.34（預估 $2.50，誤差 -6.4%）。Argo 廠（伊利諾州）玉米輸送 + 糖漿精製機械故障 + 4/10 熱事故，原料損失 $40M，遠超初估 $10-15M。Argo 貢獻美加食品與工業段 &gt;40% 淨銷售額。全年 EPS 指引下修至 $10.45–$11.15（原 $11.00–$11.80）。</div>
+      <div class="card-insight">美國產改性玉米澱粉與葡萄糖漿近期存在供應缺口——採購部門應立即評估向 Cargill、Tate & Lyle 或 Ingredion 其他廠轉單，並建立 4–6 週安全庫存，特別針對質地關鍵應用（軟糖、乳製品穩定劑）。</div>
+      <div class="card-source">來源：<a href="https://www.fool.com/earnings/call-transcripts/2026/05/05/ingredion-ingr-q1-2026-earnings-transcript/" target="_blank">Motley Fool Earnings Transcript</a></div>
+    </div>
+
+    <div class="card type-risk" data-type="risk" data-text="泰國 木薯澱粉 cassava tapioca 價格 漲價 mosaic disease">
+      <div class="card-top">
+        <div class="card-date">2026-04-28</div>
+        <div class="card-tags"><span class="tag tag-risk">價格警示</span><span class="tag tag-risk">氣候衝擊</span></div>
+      </div>
+      <div class="card-company">Thai Starch / Bangkok Starch（泰國澱粉供應鏈）</div>
+      <div class="card-title"><a href="https://www.chemtradeasia.co.id/market-insights/global-tapioca-starch-early-may-2026-raw-cassava-shortage-trade-dynamics" target="_blank">泰國木薯澱粉 FOB $580/MT，6 週漲幅 +10.5%——木薯花葉病 + 乾旱雙重夾擊</a></div>
+      <div class="card-summary">2026/5/5 報價 $580/MT（3/31 為 $525），年均 $0.29/kg 高於 2025（$0.27）和 2024（$0.26）。致因：① 泰國東北部木薯花葉病（cassava mosaic disease）降低根莖澱粉含量（目標 20%，現低於此值）；② 乾旱使每公頃產量下滑；③ 莖插種苗短缺，2026 種植面積縮減。泰國 + 越南 + 印尼佔全球木薯澱粉出口 &gt;70%，東南亞任何干擾均引發全球連鎖。</div>
+      <div class="card-insight">此次漲幅是結構性供給緊縮而非季節性——應加速與泰國廠商的長約談判，並啟動越南或印尼來源的多元化布局，以規避木薯花葉病持續蔓延風險。</div>
+      <div class="card-source">來源：<a href="https://www.chemtradeasia.co.id/market-insights/global-tapioca-starch-early-may-2026-raw-cassava-shortage-trade-dynamics" target="_blank">Chemtradeasia Market Insights</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="IFF 出售 food ingredients 水膠體 hydrocolloid xanthan">
+      <div class="card-top">
+        <div class="card-date">2026-05-05</div>
+        <div class="card-tags"><span class="tag tag-risk">M&A 風險</span><span class="tag tag-finance">$3.28B</span></div>
+      </div>
+      <div class="card-company">IFF (International Flavors & Fragrances)</div>
+      <div class="card-title"><a href="https://seekingalpha.com/article/4899345-international-flavors-and-fragrances-inc-iff-q1-2026-earnings-call-transcript" target="_blank">Q1 2026 $2.74B 銷售額超預期；Food Ingredients 部門正式啟動出售（估值 ~$3.28B）</a></div>
+      <div class="card-summary">Q1 2026 淨銷售 $2.74B（-4% reported，+3% 固定匯率），調整後 EPS $1.25 超預期 $0.17。Food Ingredients 部門已確認進入正式出售程序（營業利益 $423M，利潤率 12.9%，估值 ~$3.28B），含水膠體相關業務。3 月完成大豆壓榨/卵磷脂出售予 Bunge。全年指引：$10.5–10.8B，1–4% 有機增長。</div>
+      <div class="card-insight">IFF Food Ingredients（含 Ticagel、黃原膠等水膠體產品線）的買家尚未確定——現有採購商應密切追蹤收購方身份，新業主可能重組產品線或調整定價，建議評估替代供應商備案。</div>
+      <div class="card-source">來源：<a href="https://seekingalpha.com/article/4899345-international-flavors-and-fragrances-inc-iff-q1-2026-earnings-call-transcript" target="_blank">Seeking Alpha / IFF Earnings</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="DSM-Firmenich Freezestorm 八角 star anise 冷感 TRPM8">
+      <div class="card-top">
+        <div class="card-date">2026-01-15</div>
+        <div class="card-tags"><span class="tag tag-new">趨勢新品</span><span class="tag tag-tech">感官科技</span></div>
+      </div>
+      <div class="card-company">DSM-Firmenich</div>
+      <div class="card-title"><a href="https://www.dsm-firmenich.com/en/businesses/taste-texture-health/news-events/press-releases/dsm-firmenich-names-frosted-star-anise-as-flavor-of-the-year-2026-capturing-a-global-desire-for-warmth-and-freshness.html" target="_blank">2026 年度風味「霜降八角」：Freezestorm 非薄荷醇冷感技術 + trans-anethole，打造「暖遇冷」感官</a></div>
+      <div class="card-summary">Freezestorm 技術以非薄荷醇 TRPM8 受體激動劑傳遞冷感（無薄荷味），搭配八角主風味成分 trans-anethole（佔精油 80-90%）形成「暖遇冷」雙感官體驗。消費者調研顯示全球僅 34% 消費者有意識嘗試過八角，正面標示的產品不足 10%，市場白地廣闊。</div>
+      <div class="card-insight">R&D 應在 2026–2027 趨勢窗口優先試用 Freezestorm + 八角組合應用於 RTD 飲料、糖果或乳製品，DSM-Firmenich 已提供 FlavourVision 授權試用計畫，先行申請可獲得感官數據支援。</div>
+      <div class="card-source">來源：<a href="https://www.dsm-firmenich.com/en/businesses/taste-texture-health/news-events/press-releases/dsm-firmenich-names-frosted-star-anise-as-flavor-of-the-year-2026-capturing-a-global-desire-for-warmth-and-freshness.html" target="_blank">DSM-Firmenich Newsroom</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Givaudan GLP-1 Myromi 個人化香氣 感官 flavor">
+      <div class="card-top">
+        <div class="card-date">2026-03-06</div>
+        <div class="card-tags"><span class="tag tag-new">新品/機會</span><span class="tag tag-tech">AI 感官</span></div>
+      </div>
+      <div class="card-company">Givaudan</div>
+      <div class="card-title"><a href="https://www.foodingredientsfirst.com/news/expo-west-2026-givaudan-glp1-digital-aromas.html" target="_blank">Expo West 2026：GLP-1 使用者味覺圖譜研究 + Myromi 手持個人化香氣裝置</a></div>
+      <div class="card-summary">Q1 2026 銷售 CHF 1,875M（+2.8% LFL）。Givaudan 研究顯示 GLP-1 藥物使用者（美國已逾 1,000-1,500 萬人）出現改變的味覺享樂反應（對甜/脂肪敏感度降低），需重新校準風味強度與飽足感信號。Myromi 手持香氣裝置搭配 AI 即時反饋，實現量產前的消費者共創。</div>
+      <div class="card-insight">GLP-1 使用者群體正成為明確的配方簡報需求方——R&D 應主動聯繫 Givaudan FlavourVision® 計畫，針對低熱量高飽足感、鮮味強化的產品概念開發，搶佔 2026–2027 趨勢視窗。</div>
+      <div class="card-source">來源：<a href="https://www.foodingredientsfirst.com/news/expo-west-2026-givaudan-glp1-digital-aromas.html" target="_blank">Food Ingredients First</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Symrise Bond Pet Foods 精密發酵 precision fermentation 蛋白質">
+      <div class="card-top">
+        <div class="card-date">2026-04-15</div>
+        <div class="card-tags"><span class="tag tag-tech">精密發酵</span><span class="tag tag-new">策略投資</span></div>
+      </div>
+      <div class="card-company">Symrise</div>
+      <div class="card-title"><a href="https://www.symrise.com/newsroom/article/symrise-invests-in-bond-pet-foods-to-accelerate-sustainable-innovation-in-pet-nutrition-via-precision-fermentation/" target="_blank">Symrise 入股 Bond Pet Foods：酵母生物反應器表現動物同源蛋白，繞過傳統肉類供應鏈</a></div>
+      <div class="card-summary">Bond Pet Foods（科羅拉多，2017 年創立）使用重組蛋白表現技術於酵母生物反應器中生產與雞肉/牛肉胺基酸序列完全相同的蛋白質，複製天然肉類中的核苷酸、游離胺基酸與梅納反應風味化合物。Symrise Q1 2026 營收 $1.25B（有機微降 0.4%，優於預測）。</div>
+      <div class="card-insight">Symrise 的「精密發酵蛋白 + 香料系統」一體化整合方案，對 Danish Crown 等傳統肉類蛋白供應商構成長期替代威脅——可將此動態帶入與傳統肉品供應商的談判桌，測試其對成本與技術路線的靈活度。</div>
+      <div class="card-source">來源：<a href="https://www.symrise.com/newsroom/article/symrise-invests-in-bond-pet-foods-to-accelerate-sustainable-innovation-in-pet-nutrition-via-precision-fermentation/" target="_blank">Symrise Newsroom</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Danish Crown 丹麥皇冠 McDonald's 牛肉 北歐 產能">
+      <div class="card-top">
+        <div class="card-date">2026-04-20</div>
+        <div class="card-tags"><span class="tag tag-new">產能擴張</span></div>
+      </div>
+      <div class="card-company">Danish Crown（丹麥皇冠）</div>
+      <div class="card-title"><a href="https://www.danishcrown.com/global/contact/media-and-news/news/mcdonald-s-and-danish-crown-create-new-jobs-in-denmark/" target="_blank">Vejen 新廠供應麥當勞北歐市場：漢堡肉排 + 培根，2026 年夏季啟動，創造 80-100 職缺</a></div>
+      <div class="card-summary">Danish Crown 在丹麥 Vejen 建立 5,000+ 平米牛肉肉排專屬廠，供應丹麥/瑞典/挪威/芬蘭麥當勞，含 Quarter Pounder、Big Mac 肉排與培根。相鄰豬骨去骨線 10/1 啟動（每週 6 萬件），原料來自 Horsens、Herning、Rønne、Blans 屠宰廠。</div>
+      <div class="card-insight">Danish Crown 鎖定長期大訂單後，其豬牛邊角料的市場現貨供應將收緊——採購進一步加工肉類成分的買家應提前與 DC 確認供應分配優先序，或評估備援供應商。</div>
+      <div class="card-source">來源：<a href="https://www.danishcrown.com/global/contact/media-and-news/news/mcdonald-s-and-danish-crown-create-new-jobs-in-denmark/" target="_blank">Danish Crown Newsroom</a></div>
+    </div>
+
+    <div class="card type-tech" data-type="tech" data-text="NH Foods Nippon Ham 日本火腿 魔芋 konjac 植物肉 proteinnovation">
+      <div class="card-top">
+        <div class="card-date">2026-04-30</div>
+        <div class="card-tags"><span class="tag tag-tech">植物蛋白</span><span class="tag tag-finance">¥500億</span></div>
+      </div>
+      <div class="card-company">NH Foods（日本火腿 / Nippon Ham）</div>
+      <div class="card-title"><a href="https://www.nipponham.co.jp/eng/ir/news/" target="_blank">「Proteinnovation」中期計畫：¥500億投資，魔芋葡甘露聚糖用於植物鮪魚生魚片，目標營收 ¥1.38兆</a></div>
+      <div class="card-summary">NH Foods 中期計畫以 ¥500億（約 $32億）推動「Proteinnovation」平台，重點：① 魔芋粉 + 大豆組織蛋白複製火腿/腸的彈牙纖維感（KGM 葡甘露聚糖提供肌肉組織口感）；② 魔芋 + 膳食纖維 + 酵母複製金槍魚肌層的疊層可切質地（剪切製程）；③ 入股 CoreTissue 培育肉支架技術（2025/11）。</div>
+      <div class="card-insight">NH Foods 大規模採用魔芋葡甘露聚糖作為植物肉組織化劑，意味機構級需求正在形成——供應商（如湖北一致）應立即提供產能預訂協議，KGM 全球供需缺口已達 4 倍。</div>
+      <div class="card-source">來源：<a href="https://www.nipponham.co.jp/eng/ir/news/" target="_blank">NH Foods IR</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Hubei Yizhi konjac 湖北一致 魔芋 glucomannan 供需缺口">
+      <div class="card-top">
+        <div class="card-date">2026-05-01</div>
+        <div class="card-tags"><span class="tag tag-risk">供需失衡</span><span class="tag tag-new">機會</span></div>
+      </div>
+      <div class="card-company">湖北一致魔芋（Hubei Yizhi Konjac）</div>
+      <div class="card-title"><a href="http://en.easykonjac.com/html/en/" target="_blank">全球魔芋葡甘露聚糖需求是供給的 4 倍：中國佔全球產量 70%，一致為中國唯一上市魔芋企業</a></div>
+      <div class="card-summary">湖北一致（北交所上市，2023/2）年產能：水膠體 8,000MT + 魔芋食品 10,000MT。全球 KGM 供給估計僅 ~12,000MT，而需求已超過 50,000MT——形成 4 倍結構性缺口。KGM 在 1% 溶液下黏度 &gt;20,000 mPa·s（非牛頓流體），用於凝膠成形、脂肪替代與膳食纖維強化。批發報價 $18–100/kg（依純度）。</div>
+      <div class="card-insight">在 KGM 供需嚴重失衡的情況下，開發魔芋基產品的企業（植物肉、保健品、低卡食品）應與一致建立直接長期供應協議，而非依賴現貨市場，以鎖定原料成本並確保供應穩定性。</div>
+      <div class="card-source">來源：<a href="http://en.easykonjac.com/html/en/" target="_blank">Yizhi Konjac Official</a></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== SECTION 2: BRAND & CAPITAL ===== -->
+<div class="section" id="tab-s2">
+  <div class="section-header">
+    <div class="section-title">💰 區塊二：資本與品牌動向 <span style="color:var(--green);font-size:0.8rem">(Capital & Brand Strategy)</span></div>
+    <div class="section-desc">FMCG 終端品牌・四大糧商・日系食品・中國茶飲連鎖 ｜ 財報・M&A・護城河</div>
+  </div>
+  <div class="cards" id="cards-s2">
+
+    <div class="card type-finance" data-type="finance" data-text="Coca-Cola 可口可樂 Q1 2026 earnings 財報 tariff 關稅">
+      <div class="card-top">
+        <div class="card-date">2026-04-29</div>
+        <div class="card-tags"><span class="tag tag-finance">財報</span><span class="tag tag-risk">關稅風險</span></div>
+      </div>
+      <div class="card-company">Coca-Cola (KO)</div>
+      <div class="card-title"><a href="https://investors.coca-colacompany.com/news-releases" target="_blank">Q1 2026 有機增長 +6%，EPS $0.73 超預期；關稅衝擊全年指引，計畫調整配方減少鋁罐依賴</a></div>
+      <div class="card-summary">可口可樂 Q1 2026 有機收入增長 6%，EPS $0.73（超預估 $0.68）。由於美國鋁罐關稅政策不確定性，公司正評估包裝組合調整，傾向增加玻璃瓶與 PET 比例。整體定價策略維持，但局部市場出現量價取捨的跡象。公司重申全年有機增長 5-6% 目標，但以「一定的不確定性」為前提。</div>
+      <div class="card-insight">可口可樂轉向 PET 包裝的傾向，可能提升對 PET 友好型穩定劑與飲料基底香料的需求——供應商應針對 PET 容器的風味遷移保護提出技術解決方案。</div>
+      <div class="card-source">來源：<a href="https://investors.coca-colacompany.com/news-releases" target="_blank">Coca-Cola IR</a> ｜ Wall Street Journal</div>
+    </div>
+
+    <div class="card type-finance" data-type="finance" data-text="ADM Archer Daniels Midland 財報 divestiture 資產剝離 restructuring">
+      <div class="card-top">
+        <div class="card-date">2026-04-29</div>
+        <div class="card-tags"><span class="tag tag-finance">財報</span><span class="tag tag-risk">重組</span></div>
+      </div>
+      <div class="card-company">ADM (Archer-Daniels-Midland)</div>
+      <div class="card-title"><a href="https://investors.adm.com/news-releases" target="_blank">Q1 2026 調整後 EPS $0.70，持續資產剝離；特殊成分業務 Specialty Ingredients 出售評估中</a></div>
+      <div class="card-summary">ADM 持續執行 2025 年啟動的聚焦策略，加速剝離邊緣資產（已出售乙醇業務等）。Q1 2026 EPS 受大宗商品差價收窄壓制，特殊成分部門（含香料、功能性蛋白等）仍在評估戰略選項。ADM 財務醜聞後的修復期仍持續，CEO 換將後聚焦於大宗農業與特種成分雙核心。</div>
+      <div class="card-insight">ADM 特種成分業務的潛在出售或獨立，對功能性蛋白質與特殊澱粉採購商而言是供應商結構重整信號——建議提前盤點 ADM 在現有配方中的不可替代性，並評估替代供應商以降低業主更迭風險。</div>
+      <div class="card-source">來源：<a href="https://investors.adm.com/news-releases" target="_blank">ADM IR</a> ｜ Reuters</div>
+    </div>
+
+    <div class="card type-finance" data-type="finance" data-text="Bunge Viterra 整合 grain 糧商 大宗商品">
+      <div class="card-top">
+        <div class="card-date">2026-03-15</div>
+        <div class="card-tags"><span class="tag tag-finance">M&A整合</span></div>
+      </div>
+      <div class="card-company">Bunge Global (BG)</div>
+      <div class="card-title"><a href="https://investors.bunge.com/news-releases" target="_blank">Bunge-Viterra 整合完成一周年：穀物壓榨產能達全球前三，聚焦東南亞與黑海供應鏈韌性</a></div>
+      <div class="card-summary">Bunge 完成 Viterra 收購（~$8.2B）後整合效益逐步顯現，壓榨網絡覆蓋北美、南美、歐洲及黑海地區。與 IFF 的大豆壓榨/卵磷脂業務交割於 2026Q1 完成，強化 Bunge 在植物油基成分的垂直整合。東南亞市場的穀物流轉量是 Bunge 增長最快的地區業務。</div>
+      <div class="card-insight">Bunge 整合 IFF 卵磷脂業務後，成為大豆卵磷脂的更完整供應鏈主——乳化劑採購商應重新評估 Bunge 作為乳化劑（日晒卵磷脂/非改性大豆卵磷脂）直接來源的可行性，可能獲得比中間商更好的價格透明度。</div>
+      <div class="card-source">來源：<a href="https://investors.bunge.com/news-releases" target="_blank">Bunge IR</a> ｜ Bloomberg</div>
+    </div>
+
+    <div class="card type-finance" data-type="finance" data-text="Starbucks Brian Niccol 星巴克 back to starbucks 業績 turnaround">
+      <div class="card-top">
+        <div class="card-date">2026-04-29</div>
+        <div class="card-tags"><span class="tag tag-finance">財報</span><span class="tag tag-new">轉型</span></div>
+      </div>
+      <div class="card-company">Starbucks (SBUX)</div>
+      <div class="card-title"><a href="https://investor.starbucks.com/press-releases" target="_blank">Brian Niccol「Back to Starbucks」策略 Q2 FY2026：北美同店銷售轉正，重回咖啡本質，簡化菜單 30%</a></div>
+      <div class="card-summary">Brian Niccol（2024/9 就任 CEO）主導的「Back to Starbucks」回歸策略初見成效，Q2 FY2026 北美同店銷售扭負為正，恢復咖啡師手寫名字、門市舒適感等儀式感體驗。菜單精簡約 30%，減少過度客製化操作時間。中國市場仍面臨競爭壓力（瑞幸、霸王茶姬等），正評估合資/授權模式。</div>
+      <div class="card-insight">星巴克菜單簡化策略意味著複雜香料或功能性添加物（增稠劑、特殊乳化劑）的單品用量下滑——香料供應商應重新聚焦於提供「少品項高頻率」的核心咖啡風味解決方案，而非複雜定制化配方。</div>
+      <div class="card-source">來源：<a href="https://investor.starbucks.com/press-releases" target="_blank">Starbucks IR</a> ｜ Bloomberg</div>
+    </div>
+
+    <div class="card type-risk" data-type="risk" data-text="OATLY 燕麥奶 財務 重組 虧損 restructuring">
+      <div class="card-top">
+        <div class="card-date">2026-02-26</div>
+        <div class="card-tags"><span class="tag tag-risk">財務風險</span></div>
+      </div>
+      <div class="card-company">OATLY (OTLY)</div>
+      <div class="card-title"><a href="https://investors.oatly.com/news-releases" target="_blank">OATLY 2025 全年虧損持續，執行大規模裁員與廠能整併；品牌溢價在通膨環境下遭侵蝕</a></div>
+      <div class="card-summary">OATLY 持續虧損（2024 年虧損超 $2.5億），2026 年啟動新一輪成本削減計畫，關閉部分高成本北美生產設施並整合歐洲產線。品牌定位的高溢價策略在通膨環境中遭到更多消費者的性價比挑戰，市場份額被私標植物奶侵蝕。管理層更迭頻繁，資本效率成為投資者主要關切。</div>
+      <div class="card-insight">OATLY 產能縮減降低了其對燕麥澱粉/燕麥纖維的採購量——正在競爭 OATLY 供應鏈的原料商應同時評估其他植物奶品牌或零售商私標的替代機會，因私標植物奶的增長正在填補 OATLY 讓出的市場空間。</div>
+      <div class="card-source">來源：<a href="https://investors.oatly.com/news-releases" target="_blank">OATLY IR</a> ｜ Financial Times</div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Ajinomoto 味之素 Q4 財報 umami 鮮味 海外擴張">
+      <div class="card-top">
+        <div class="card-date">2026-05-08</div>
+        <div class="card-tags"><span class="tag tag-finance">財報</span><span class="tag tag-new">海外擴張</span></div>
+      </div>
+      <div class="card-company">味之素 (Ajinomoto / 2802.T)</div>
+      <div class="card-title"><a href="https://www.ajinomoto.com/ir/news/" target="_blank">FY2026 Q4 業績：冷凍食品與鮮味調味料海外銷售創歷史新高，東南亞與北美貢獻最大增量</a></div>
+      <div class="card-summary">味之素 FY2026（截至 2026/3）海外銷售比率持續提升，冷凍食品（日本水餃、亞洲菜系餃子）在北美市場強勁增長。鮮味調味料（MSG、核苷酸）受益於「減鹽增味」趨勢在功能性食品中的需求。公司持續投資東南亞本地化產能，泰國、越南、菲律賓等地工廠擴產。</div>
+      <div class="card-insight">味之素核苷酸鮮味增強劑（GMP、IMP）在「減鹽但保鮮味」的調味料配方中具有不可替代性——R&D 應將核苷酸增味劑納入低鈉健康產品的必要成分清單，並以味之素的臨床鹽分減少數據支撐對食品廠客戶的技術提案。</div>
+      <div class="card-source">來源：<a href="https://www.ajinomoto.com/ir/news/" target="_blank">Ajinomoto IR</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Mixue 蜜雪冰城 IPO 港股 擴張 供應鏈 低成本">
+      <div class="card-top">
+        <div class="card-date">2026-03-20</div>
+        <div class="card-tags"><span class="tag tag-finance">IPO 後整合</span><span class="tag tag-new">供應鏈擴張</span></div>
+      </div>
+      <div class="card-company">蜜雪集團 (Mixue Group / 02097.HK)</div>
+      <div class="card-title"><a href="https://www.hkexnews.hk/" target="_blank">港股上市後首份年報：門店突破 45,000 家，ICY CITY 海外品牌加速東南亞佈局，自建供應鏈護城河加深</a></div>
+      <div class="card-summary">蜜雪冰城（2024/3 港股上市）透過自建物流、直採原料（白砂糖、奶粉、果漿、茶葉）與中央工廠，將門店原料成本壓至競爭對手的 40-60%。現有 45,000+ 門店（中國 &gt;40,000 + 海外 ~5,000），ICY CITY 主攻東南亞中高端定位。每個新市場進入均配套本地倉儲，以降低跨境物流成本並穩定食材品質。</div>
+      <div class="card-insight">蜜雪「極致成本控制」模式的本質是供應鏈垂直整合——向蜜雪的供應商（奶粉、果漿、茶葉）提案時，應強調規模化供應穩定性與合規認證，而非差異化溢價，因蜜雪的採購邏輯是最低 TCO 而非品質分層。</div>
+      <div class="card-source">來源：<a href="https://www.hkexnews.hk/" target="_blank">港交所公告</a> ｜ Bloomberg</div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="CHAGEE 霸王茶姬 IPO 海外 東南亞 品牌 茶飲">
+      <div class="card-top">
+        <div class="card-date">2026-04-15</div>
+        <div class="card-tags"><span class="tag tag-new">IPO / 海外擴張</span></div>
+      </div>
+      <div class="card-company">霸王茶姬 (CHAGEE / NASDAQ: CHA)</div>
+      <div class="card-title"><a href="https://ir.chagee.com/" target="_blank">NASDAQ 上市後：東南亞門店突破 1,000 家，馬來西亞/泰國/新加坡三市場確立；高端茶底採購量倍增</a></div>
+      <div class="card-summary">霸王茶姬（2025 年 NASDAQ 上市）上市資金主要投入海外供應鏈建設與品牌行銷。東南亞 1,000+ 門店已確立「高端中國茶飲」品牌定位，與瑞幸、奈雪形成差異。採購模式強調優質茶原料（雲南大葉茶、高山烏龍），對茶香料與天然呈味劑的需求持續增加。</div>
+      <div class="card-insight">CHAGEE 的東南亞擴張正在創造一個「高品質茶香料與天然茶萃取物」的新 B2B 市場——香料供應商（DSM-Firmenich、Givaudan、Takasago）應主動向 CHAGEE 的原料研發部門提案，切入其東南亞產品本地化需求。</div>
+      <div class="card-source">來源：<a href="https://ir.chagee.com/" target="_blank">CHAGEE IR</a> ｜ Nikkei Asia</div>
+    </div>
+
+    <div class="card type-finance" data-type="finance" data-text="Nissin 日清食品 cup noodles 財報 海外 即食麵">
+      <div class="card-top">
+        <div class="card-date">2026-05-07</div>
+        <div class="card-tags"><span class="tag tag-finance">財報</span><span class="tag tag-new">海外增長</span></div>
+      </div>
+      <div class="card-company">日清食品控股 (Nissin Foods / 2897.T)</div>
+      <div class="card-title"><a href="https://www.nissin.com/jp/ir/library/results/" target="_blank">FY2026 全年業績：海外銷售比率突破 35%，美國 Cup Noodles 持續提價且量未減，中國市場回溫</a></div>
+      <div class="card-summary">日清食品 FY2026 海外業務（美國、中國、香港）貢獻超過 35% 的集團銷售。美國市場在通膨環境下採取選擇性提價策略，平均客單價提升約 8-12% 而銷量維持，印證品牌定價能力。中國市場受麵食品類消費復甦帶動。湯頭配方持續進化，鮮味系統（MSG + 核苷酸）的用量與複雜度均有提升。</div>
+      <div class="card-insight">日清在美國成功「提價不減量」的關鍵在於其風味系統的品牌獨特性——湯頭香料與鮮味成分供應商應以「差異化風味識別度」為核心，而非低價，來切入日清的新品開發需求。</div>
+      <div class="card-source">來源：<a href="https://www.nissin.com/jp/ir/library/results/" target="_blank">日清食品 IR</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Meiji 明治控股 Q4 財報 乳業 巧克力 健康食品">
+      <div class="card-top">
+        <div class="card-date">2026-05-09</div>
+        <div class="card-tags"><span class="tag tag-finance">財報</span></div>
+      </div>
+      <div class="card-company">明治控股 (Meiji Holdings / 2269.T)</div>
+      <div class="card-title"><a href="https://www.meiji.com/ir/news/" target="_blank">FY2026 業績：健康科學事業（益生菌 PA-3、乳蛋白水解物）創營收新高，巧克力消費突破記錄</a></div>
+      <div class="card-summary">明治 FY2026（截至 2026/3）健康科學部門（PA-3 益生菌、乳清蛋白水解物、低乳糖系列）銷售持續雙位數增長。巧克力部門受益於可可豆短缺帶來的「高品質感知提升」，消費者願意為品牌巧克力支付更高溢價。乳業原料採購量穩定，持續拓展乳蛋白功能性應用。</div>
+      <div class="card-insight">明治益生菌 PA-3 的持續增長顯示日本消費者對功能性乳製品的接受度維持高位——明治的乳蛋白水解物採購增加，是向明治提案高純度 WPI/WPH 供應的良好切入時機，可結合其PA-3載體配方開發聯合提案。</div>
+      <div class="card-source">來源：<a href="https://www.meiji.com/ir/news/" target="_blank">明治控股 IR</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Yoshinoya 吉野家 牛丼 海外 menu 菜單 cost">
+      <div class="card-top">
+        <div class="card-date">2026-04-10</div>
+        <div class="card-tags"><span class="tag tag-finance">策略調整</span></div>
+      </div>
+      <div class="card-company">吉野家 (Yoshinoya / 9861.T)</div>
+      <div class="card-title"><a href="https://www.yoshinoya-holdings.com/ir/news/" target="_blank">吉野家漲價後客流量回升：高蛋白質菜單擴展，外送比率提升至 22%，原料成本控制成核心 KPI</a></div>
+      <div class="card-summary">吉野家完成 2025 年價格調整（牛丼均漲 ¥30-50）後，同店銷售額呈正增長，顯示價格彈性低於預期。高蛋白質套餐（牛肉 + 蛋 + 豆腐）成為新品開發重點。外送比率達 22%，帶動對「耐外送食材」的配方需求（如保溫性佳的澱粉類增稠劑、抗析水的牛肉醬汁穩定劑）。</div>
+      <div class="card-insight">吉野家的「外送比率上升 + 醬汁穩定性需求」為功能性澱粉（如乙醯化澱粉、磷酸化澱粉）供應商創造了具體的技術進入點——可針對「外送場景下的牛肉醬汁抗析水」開發客製解決方案作為敲門磚。</div>
+      <div class="card-source">來源：<a href="https://www.yoshinoya-holdings.com/ir/news/" target="_blank">吉野家控股 IR</a></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== SECTION 3: RETAIL & MEAT MARKET ===== -->
+<div class="section" id="tab-s3">
+  <div class="section-header">
+    <div class="section-title">🏪 區塊三：終端通路與肉類行情 <span style="color:var(--red);font-size:0.8rem">(Retail & Meat Market)</span></div>
+    <div class="section-desc">零售商・外送平台・日本財閥 ｜ 通膨・自有品牌・物流履約・宏觀趨勢</div>
+  </div>
+  <div class="cards" id="cards-s3">
+
+    <div class="card type-new" data-type="new" data-text="Costco Kirkland Signature 自有品牌 private label 新品 供應商">
+      <div class="card-top">
+        <div class="card-date">2026-03-05</div>
+        <div class="card-tags"><span class="tag tag-new">自有品牌機會</span><span class="tag tag-finance">$900億</span></div>
+      </div>
+      <div class="card-company">Costco (COST)</div>
+      <div class="card-title"><a href="https://www.fool.com/earnings/call-transcripts/2026/03/05/costco-cost-q2-2026-earnings-call-transcript/" target="_blank">Kirkland Signature 年銷售額達 $900 億，Q2 單季新增 30 款新品，私標滲透率 28%</a></div>
+      <div class="card-summary">KS 年銷售額約 $900億（YoY +$150億），為美國最大 CPG 食品品牌（按銷量）。Q2 FY2026 新增 30 款 KS 新品，管理層將 KS 定位為關稅對沖工具——自控供應鏈可快速切換來源地。會員制通路（倉儲超市）私標滲透率達 47%，為各零售業態之首。高蛋白質、功能性食品、健康零食為 KS 新品開發最活躍品類。</div>
+      <div class="card-insight">Costco 正積極尋找 KS 新品白地（功能性飲料、植物蛋白、高端醬料）——具備大批量穩定供應能力的原料商應梳理 KS 現有 SKU 缺口，主動向 Costco 採購部門提出「從原料到成品」的共同開發提案。</div>
+      <div class="card-source">來源：<a href="https://www.fool.com/earnings/call-transcripts/2026/03/05/costco-cost-q2-2026-earnings-call-transcript/" target="_blank">Motley Fool / Costco Q2 FY2026 Earnings</a></div>
+    </div>
+
+    <div class="card type-finance" data-type="finance" data-text="Walmart 沃爾瑪 Q1 2026 earnings Great Value 自有品牌 天然色素 合成色素">
+      <div class="card-top">
+        <div class="card-date">2026-04-15</div>
+        <div class="card-tags"><span class="tag tag-new">自有品牌重塑</span><span class="tag tag-risk">配方要求</span></div>
+      </div>
+      <div class="card-company">Walmart (WMT)</div>
+      <div class="card-title"><a href="https://corporate.walmart.com/news/2026/04/15/walmart-unveils-modern-redesign-of-great-value-its-flagship-private-brand" target="_blank">Great Value 史上最大規模重塑：10,000+ SKU 煥新，2027/1 前全面移除合成色素</a></div>
+      <div class="card-summary">Walmart 對 Great Value 展開歷史最大規模包裝及配方重塑，強制要求 2027 年 1 月前所有食品私標 SKU 移除合成色素——涵蓋 10,000+ 品項。此舉創造大規模強制性配方重組需求。Walmart 亦宣布 Q1 FY2026 可比銷售成長 +4.5%，電商首次在美國實現盈利（+21%），且拒絕發布全年 EPS 指引（因關稅不確定性）。</div>
+      <div class="card-insight">Walmart 的合成色素淘汰令（2027/1）將在 6-8 個月內觸發 10,000 個 SKU 的強制重新配方——天然色素（薑黃、甜菜紅、螺旋藻等）和天然風味劑供應商應立即啟動對 Walmart 私標外包廠商的系統性拜訪計畫。</div>
+      <div class="card-source">來源：<a href="https://corporate.walmart.com/news/2026/04/15/walmart-unveils-modern-redesign-of-great-value-its-flagship-private-brand" target="_blank">Walmart Corporate</a> ｜ CNBC</div>
+    </div>
+
+    <div class="card type-risk" data-type="risk" data-text="Uber Eats 外送 佣金 commission 漲價 餐廳 margin">
+      <div class="card-top">
+        <div class="card-date">2026-03-11</div>
+        <div class="card-tags"><span class="tag tag-risk">通路壓力</span></div>
+      </div>
+      <div class="card-company">Uber Eats</div>
+      <div class="card-title"><a href="https://www.restaurantdive.com/news/uber-eats-increases-marketplace-fees/814294/" target="_blank">Uber Eats 5 年來首次提高佣金：Lite 方案 15%→20%，Plus 方案 Uber One 訂單額外加收 5%</a></div>
+      <div class="card-summary">自 2026/3/11 起，Uber Eats 調整三級收費：Lite 方案 15%→20%（+5pp）；Plus 方案 Uber One 會員訂單額外徵收 5%（實際 ~30%）；自訂方案費率上調 3pp（上限 30%）。Uber 官方說法：「因應運營環境變化」。實際效果：中型連鎖與獨立餐廳毛利率一夜壓縮 5pp，迫使菜單漲價或退出平台，加速自建外送與幽靈廚房的興起。</div>
+      <div class="card-insight">外送佣金攀升直接壓縮餐廳食材預算，催生「外送優化型食材」的 B2B 需求——可針對「高保溫穩定性澱粉」、「抗析水醬料系統」等開發外送場景解決方案，對中小餐廳鏈提案可節省重新設計菜單的成本。</div>
+      <div class="card-source">來源：<a href="https://www.restaurantdive.com/news/uber-eats-increases-marketplace-fees/814294/" target="_blank">Restaurant Dive</a></div>
+    </div>
+
+    <div class="card type-finance" data-type="finance" data-text="Grab Foodpanda 台灣 收購 外送 東南亞 平台整合">
+      <div class="card-top">
+        <div class="card-date">2026-03-23</div>
+        <div class="card-tags"><span class="tag tag-finance">M&A</span><span class="tag tag-new">市場擴張</span></div>
+      </div>
+      <div class="card-company">Grab × Delivery Hero (Foodpanda)</div>
+      <div class="card-title"><a href="https://techcrunch.com/2026/03/23/grab-to-buy-foodpanda-taiwan-from-delivery-hero-for-600-million/" target="_blank">Grab 以 $6 億收購 Foodpanda 台灣，首度跨出東南亞進入台灣 2,300 萬消費者市場</a></div>
+      <div class="card-summary">Grab 宣布收購 Delivery Hero 的 Foodpanda 台灣業務（$6億），成為其第 9 個市場，也是首個東南亞以外的擴張。整合 AI 路線規劃與配送技術至 21 個台灣城市，用戶/商家/外送員遷移目標 2027 年初完成。Grab 在東南亞外送市場份額已達 55%（2025）。此整合降低補貼競爭，改善單位經濟效益，但餐廳端喪失過去的促銷補貼支持。</div>
+      <div class="card-insight">Grab 統一東南亞 + 台灣平台為食品品牌跨市場同步推出新品提供基礎設施——擁有台灣到東南亞擴張雄心的食品企業應建立 GrabFood 商家合作關係，在多市場同步測試新品概念，縮短市場驗證周期。</div>
+      <div class="card-source">來源：<a href="https://techcrunch.com/2026/03/23/grab-to-buy-foodpanda-taiwan-from-delivery-hero-for-600-million/" target="_blank">TechCrunch</a> ｜ <a href="https://www.deliveryhero.com/newsroom/delivery-hero-to-sell-taiwan-food-delivery-operations-to-grab-for-usd-600-million/" target="_blank">Delivery Hero Newsroom</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Grab GrabX robot AI Carri 機器人 外送 取餐">
+      <div class="card-top">
+        <div class="card-date">2026-04-08</div>
+        <div class="card-tags"><span class="tag tag-tech">AI 物流</span></div>
+      </div>
+      <div class="card-company">Grab</div>
+      <div class="card-title"><a href="https://www.pymnts.com/news/delivery/2026/delivery-robots-lead-grabs-ai-expansion/" target="_blank">GrabX 2026：Carri 商場取餐機器人 + 13 項 AI 功能，縮短 10% 外送員等候時間</a></div>
+      <div class="card-summary">雅加達 GrabX 大會發布 Carri——可自主導航商場取餐的機器人，回收外送員 ~10% 被浪費在等候餐廳取餐的時間。同時發布 13 項 AI 功能含 GrabMaps、AI 助理、AI 推薦。整體戰略：Grab 從物流平台進化為「AI 驅動的日常智慧助手」。更快取餐減少食品在外送途中的品質劣化，對全服務餐廳鏈尤為關鍵。</div>
+      <div class="card-insight">Grab 縮短外送在途時間的同時，反而提高了對「高端食品質地維持能力」的要求——意味著能通過更嚴格品質測試的食材（如抗回生澱粉、穩定性明膠系統）將成為在 GrabFood 上架的差異化賣點。</div>
+      <div class="card-source">來源：<a href="https://www.pymnts.com/news/delivery/2026/delivery-robots-lead-grabs-ai-expansion/" target="_blank">PYMNTS</a> ｜ <a href="https://www.grab.com/sg/press/others/grab-unveils-13-ai-powered-experiences-at-grabx-2026-as-southeast-aseas-intelligent-everyday-guide/" target="_blank">Grab SG</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="三菱商事 Mitsubishi 泰聯 Thai Union 海鮮 seafood 魚膠原 持股">
+      <div class="card-top">
+        <div class="card-date">2025-08-04</div>
+        <div class="card-tags"><span class="tag tag-finance">策略投資</span><span class="tag tag-new">垂直整合</span></div>
+      </div>
+      <div class="card-company">三菱商事 (Mitsubishi Corporation)</div>
+      <div class="card-title"><a href="https://www.mitsubishicorp.com/jp/en/news/release/2025/20250804002.html" target="_blank">三菱商事提升泰聯持股至 20%（$2.05億）——東南亞海鮮加工垂直整合，覆蓋養殖場到零售端</a></div>
+      <div class="card-summary">三菱商事將 Thai Union 持股從 6.19% 提升至 20%（$2.05億），深化 30 年合作關係。涵蓋孵化場、飼料、加工廠到零售完整價值鏈。Thai Union 為全球最大罐頭鮪魚製造商，SeaChange® 2030 計畫對應 MSC 認證來源。三菱同步持有 Mitsubishi Shokuhin（日本最大食品批發商）100% 股權，以及 Divert 食品廢棄物回收平台的策略性股份。</div>
+      <div class="card-insight">三菱-泰聯聯盟控制東南亞海鮮加工基礎設施及副產品流——魚膠原蛋白、omega-3 濃縮物、鮪魚萃取物等海洋來源成分的供應商，應探索透過三菱商事系通路進行合作開發或聯合銷售，縮短進入日本及東南亞市場的路徑。</div>
+      <div class="card-source">來源：<a href="https://www.mitsubishicorp.com/jp/en/news/release/2025/20250804002.html" target="_blank">三菱商事 Newsroom</a> ｜ <a href="https://www.fdiforum.net/mag/featured/mitsubishi-expands-investment-in-thai-union-to-strengthen-sustainable-seafood-leadership/" target="_blank">Food & Drink International</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="三菱商事 Mitsubishi Shokuhin Yami 電商 美國 日本食品">
+      <div class="card-top">
+        <div class="card-date">2026-03-20</div>
+        <div class="card-tags"><span class="tag tag-new">數位通路</span><span class="tag tag-new">北美進入</span></div>
+      </div>
+      <div class="card-company">三菱商事 / Mitsubishi Shokuhin</div>
+      <div class="card-title"><a href="https://fortune.com/2026/03/20/mitsubishi-shokuhin-yami-us-expansion-japanese-food-ecommerce/" target="_blank">三菱食品 × Yami 電商：繞過傳統進口商，日本食品直送美國消費者——年銷售規模 ¥2.1兆</a></div>
+      <div class="card-summary">三菱食品（年銷售 ¥2.1兆，$140億，已成為三菱商事 100% 子公司）與美國亞裔食品電商 Yami 建立戰略聯盟，直接向美國消費者銷售日本食品，跳過傳統食品進口中間商。此數位直銷通路為日本功能性食品（鰹魚高湯萃取、發酵調味品、優質零食）的北美市場測試提供基礎設施。</div>
+      <div class="card-insight">三菱-Yami 通路為日本原料商的北美市場提供了低風險直銷測試管道——擁有獨特日本功能性成分（柴魚萃取物、味噌、優質醬油）的原料商可藉由 Mitsubishi Shokuhin 體系切入美國 DTC 電商，以消費者反應數據驅動 B2B 銷售。</div>
+      <div class="card-source">來源：<a href="https://fortune.com/2026/03/20/mitsubishi-shokuhin-yami-us-expansion-japanese-food-ecommerce/" target="_blank">Fortune</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="三菱商事 Divert 食品廢棄物 循環 biogas circular 永續">
+      <div class="card-top">
+        <div class="card-date">2026-04-14</div>
+        <div class="card-tags"><span class="tag tag-new">永續投資</span><span class="tag tag-finance">獨角獸</span></div>
+      </div>
+      <div class="card-company">三菱商事 × Divert Inc.</div>
+      <div class="card-title"><a href="https://www.businesswire.com/news/home/20260414335991/en/Divert-Secures-Strategic-Partnership-with-Mitsubishi-to-Scale-Circular-Infrastructure-Across-North-America" target="_blank">三菱商事領投 Divert Series C：食品廢棄物轉生質氣/動物飼料，估值突破 $10 億達到獨角獸</a></div>
+      <div class="card-summary">三菱商事領投 Divert 的 C 輪融資，使其估值突破 $10億（獨角獸）。Divert 模型：零售商未售出食品 → 厭氧消化（生質氣）或動物飼料，建立閉環供應鏈。此投資呼應三菱 FY2026 食品系統韌性策略，配合 Thai Union 增持與 Mitsubishi Shokuhin 全資化，構建從採購→批發→廢棄物回收的垂直整合。</div>
+      <div class="card-insight">三菱商事透過 Divert 建立了食品廢棄物的變現基礎設施——原料商可探索與三菱系平台的「副產品上游化」合作，將加工廢料（果渣、麩皮、蛋白質殘渣）轉化為高價值機能性成分，降低原料成本並改善 ESG 評分。</div>
+      <div class="card-source">來源：<a href="https://www.businesswire.com/news/home/20260414335991/en/Divert-Secures-Strategic-Partnership-with-Mitsubishi-to-Scale-Circular-Infrastructure-Across-North-America" target="_blank">Business Wire</a></div>
+    </div>
+
+    <div class="card type-risk" data-type="risk" data-text="住友商事 Sumitomo 巴西 農業 壞帳 關稅 geopolitical">
+      <div class="card-top">
+        <div class="card-date">2026-05-06</div>
+        <div class="card-tags"><span class="tag tag-risk">地緣風險</span><span class="tag tag-finance">財報</span></div>
+      </div>
+      <div class="card-company">住友商事 (Sumitomo Corporation)</div>
+      <div class="card-title"><a href="https://seekingalpha.com/article/4899833-sumitomo-corporation-2026-q4-results-earnings-call-presentation" target="_blank">Q4 FY2026 業績：巴西農業投入業務出現 ¥40 億壞帳，肥料成本與匯率波動侵蝕農戶還款能力</a></div>
+      <div class="card-summary">住友商事 Q4 FY2026 發布，巴西農業投入及服務業務因「可疑應收款」產生約 ¥40億壞帳準備，根源：高肥料價格 + 巴西雷亞爾貶值壓縮農戶現金流，造成應收帳款違約。SC Foods 全球採購網絡整體運作正常，但巴西大豆/玉米上游供應鏈的財務壓力已實際反映在 P&L 中。</div>
+      <div class="card-insight">巴西農業投入成本壓力的 P&L 化確認了南美大宗農產品供應鏈的財務脆弱性——依賴巴西大豆/玉米衍生成分（大豆卵磷脂、玉米糖漿、玉米澱粉）的採購商應加速東南亞或歐洲替代來源布局，而非等待巴西問題惡化後才應對。</div>
+      <div class="card-source">來源：<a href="https://seekingalpha.com/article/4899833-sumitomo-corporation-2026-q4-results-earnings-call-presentation" target="_blank">Seeking Alpha / Sumitomo Q4 FY2026</a></div>
+    </div>
+
+    <div class="card type-new" data-type="new" data-text="Marubeni 丸紅 BeecoProgram 數位 乳牛 dairy livestock 供應鏈">
+      <div class="card-top">
+        <div class="card-date">2026-04-22</div>
+        <div class="card-tags"><span class="tag tag-new">數位農業</span><span class="tag tag-tech">供應鏈科技</span></div>
+      </div>
+      <div class="card-company">丸紅 (Marubeni)</div>
+      <div class="card-title"><a href="https://www.marubeni.com/en/digital-innovation/journal/351/" target="_blank">BeecoProgram 上線：乳牛/畜牧即時數據平台，串聯農場端生產與消費端需求，構建預測性供應鏈</a></div>
+      <div class="card-summary">丸紅發布 BeecoProgram，整合乳牛/畜牧即時生產數據（產乳量、疫病狀態、飼料消耗）與消費端需求信號，縮短農場決策周期。同步完成 2026/4/1 食品農業事業部門組織重組。丸紅現有食品業務：穀物/油脂貿易、生鮮食品流通（Marubeni Foods、Marubeni Seafoods）、美國/巴西/英國/荷蘭農業投入零售。</div>
+      <div class="card-insight">BeecoProgram 的需求信號回饋機制，使乳製品和蛋白質成分供應商能夠預測原料供給量變化——可探索與丸紅 BeecoProgram 的數據整合，提前 4-8 週感知乳源原料（乳清蛋白、酪蛋白）的供應波動，優化採購排程。</div>
+      <div class="card-source">來源：<a href="https://www.marubeni.com/en/digital-innovation/journal/351/" target="_blank">Marubeni Digital Innovation</a></div>
+    </div>
+
+    <div class="card type-finance" data-type="finance" data-text="private label 自有品牌 美國 市場 Circana 通膨 inflation 健康">
+      <div class="card-top">
+        <div class="card-date">2026-05-04</div>
+        <div class="card-tags"><span class="tag tag-finance">市場數據</span><span class="tag tag-new">宏觀趨勢</span></div>
+      </div>
+      <div class="card-company">市場宏觀：美國自有品牌 CPG</div>
+      <div class="card-title"><a href="https://talkbusiness.net/2026/04/the-supply-side-private-brand-sales-growth-expected-to-continue-in-2026/" target="_blank">美國私標 CPG 銷售達 $3,300億，倉儲超市滲透率 47%，健康聲稱 SKU 為增長主引擎</a></div>
+      <div class="card-summary">Circana 數據：美國私標 CPG $3,300億，單位份額 24%，金額份額 23%。NielsenIQ 顯示全球私標增速是國家品牌的 2.5 倍。倉儲超市（Costco、Sam's Club、BJ's）滲透率 47% 為最高業態。增長三向量：① 無合成色素/香料（clean label）；② 健康功能聲稱（蛋白質、膳食纖維）；③ 高端化溢價定位。食品通膨 2.9%（2026 YoY）仍高於 20 年均值，持續推動消費者轉向私標。</div>
+      <div class="card-insight">私標向健康功能食品轉型是最大的 B2B 原料需求增量——持有「GRAS 認證 + 成本效益」功能性成分（抗性澱粉、植物蛋白分離物、益生元纖維）的供應商，應建立面向零售商的 concept selling 能力，而非僅依賴傳統 RFQ 流程。</div>
+      <div class="card-source">來源：<a href="https://talkbusiness.net/2026/04/the-supply-side-private-brand-sales-growth-expected-to-continue-in-2026/" target="_blank">Talk Business & Politics / Circana</a> ｜ <a href="https://www.foodnavigator-usa.com/Article/2026/05/04/store-brands-rise-health-focused-private-label-drives-growth/" target="_blank">Food Navigator USA</a></div>
+    </div>
+
+  </div>
+</div>
+
+</div><!-- end content -->
+
+<script>
+function switchTab(id, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+  var fb = document.getElementById('filterbar');
+  fb.style.display = (id === 'overview') ? 'none' : 'flex';
+  currentSection = id;
+  resetFilters();
+}
+
+var currentSection = 'overview';
+
+function filterCards(type, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  var cards = document.querySelectorAll('#tab-' + currentSection + ' .card');
+  cards.forEach(function(c) {
+    if (type === 'all') { c.classList.remove('hidden'); }
+    else { c.classList.toggle('hidden', !c.dataset.type || c.dataset.type !== type); }
+  });
+}
+
+function searchCards(val) {
+  val = val.toLowerCase();
+  var cards = document.querySelectorAll('#tab-' + currentSection + ' .card');
+  cards.forEach(function(c) {
+    var text = (c.dataset.text || '') + ' ' + (c.innerText || '');
+    c.classList.toggle('hidden', val.length > 0 && text.toLowerCase().indexOf(val) === -1);
+  });
+}
+
+function resetFilters() {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  var firstBtn = document.querySelector('.filter-btn');
+  if (firstBtn) firstBtn.classList.add('active');
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('hidden'));
+  var sb = document.querySelector('.search-box');
+  if (sb) sb.value = '';
+}
+</script>
+
+</body>
+</html>
